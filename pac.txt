@@ -1,0 +1,79 @@
+﻿function FindProxyForURL(url, host) {
+    var PROXY = "SOCKS5 127.0.0.1:1080; SOCKS 127.0.0.1:1080; DIRECT";
+    var SUFFIX = host.split('.').pop()
+
+    // ===== 本地网络永远直连 =====
+    if (isPlainHostName(host) ||
+        shExpMatch(host, "localhost") ||
+        /^127\./.test(host) ||
+        /^10\./.test(host) ||
+        /^192\.168\./.test(host) ||
+        /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host)) {
+        return "DIRECT";
+    }
+
+    var keyWords = ['google','github']
+    var domainSuffix = ['io','org','so','dev','biz','sh','gle','so',"app","new","ai","google"]
+
+
+    if (domainSuffix.includes(SUFFIX)) {
+        return PROXY;
+    }
+
+    for (var i = 0; i < keyWords.length; i++) {
+        if (url.indexOf(keyWords[i])>=0) {
+            return PROXY;
+        }
+    }
+    // ===== 白名单（只写主域名即可，自动匹配所有子域名）=====
+    var whiteList =[
+        "google.com.hk",
+        "chrome.com",
+        "twimg.com",
+        "x.com",
+        "dribbble.com",
+        "grok.com",
+        "cloudflareinsights.com",
+        "gstatic.com",
+        "doubleclick.net",
+        "ggpht.com",
+        "githubcopilot.com",
+        "npmjs.com",
+        "npmmirror.com",
+        "cloudflare.com",
+        "cdnjs.com",
+        "jsdelivr.net",
+        "unpkg.com",
+        "stackpath.bootstrapcdn.com",
+        "bootstrapcdn.com",
+        "fonts.gstatic.com",
+        "ajax.aspnetcdn.com",
+        "emojis.com",
+        "line.me",
+        "youtube.com",
+        "gstatic.com",
+        "supermaven.com",
+        "imphone.net",
+        "thisshop.com",
+"openai.com",
+"chatgpt.com","oaistatic.com","bolt.new","tschetech.top","windsurf.com","codeium.com","api.anthropic.com","cline.bot",
+"grokipedia.com","thaittrs.com","zcode-ai.com"
+    ]
+
+    // ===== 构建正则：自动匹配主域名及所有子域名 =====
+    if (!FindProxyForURL.proxyRegex) {
+        var escaped = whiteList.map(function(d) {
+            return d.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // 转义特殊字符
+        });
+        // 关键改动：匹配 (xxx.)example.com 这种形式，前面可以有任意层子域名
+        var pattern = '(?:^|\\.)(?:' + escaped.join('|') + ')$';
+        FindProxyForURL.proxyRegex = new RegExp(pattern, 'i');
+    }
+
+    // ===== 执行匹配 =====
+    if (FindProxyForURL.proxyRegex.test(host)) {
+        return PROXY;
+    }
+
+    return "DIRECT";
+}
